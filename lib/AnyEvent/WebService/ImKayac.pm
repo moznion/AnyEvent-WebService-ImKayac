@@ -65,14 +65,16 @@ sub new {
     my $pkg = shift;
     my %args = ($_[1]) ? @_ : %{$_[1]};
 
-    croak "require user" unless $args{user};
+    croak "missing require parameter 'user'" unless defined $args{user};
+    croak "missing require parameter 'type'" unless defined $args{type};
+    
     $args{type} = 'none' if $args{type} !~ /^(none|password|secret)$/;
 
-    if ($args{type} eq 'password' && !$args{password}) {
+    if ($args{type} eq 'password' && ! defined $args{password}) {
         croak "require password";
     }
 
-    if ($args{type} eq 'secret' && !$args{secret_key}) {
+    if ($args{type} eq 'secret' && ! defined $args{secret_key}) {
         croak "require secret_key";
     }
 
