@@ -25,7 +25,7 @@ AnyEvent::WebService::ImKayac - connection wrapper for im.kayac.com
     password => '...'
   );
 
-  $im->send('Hello! test send!!', sub {
+  $im->send( message => 'Hello! test send!!', cb => sub {
       my $res = shift;
       
       unless ( $res->{result} eq "posted" ) {
