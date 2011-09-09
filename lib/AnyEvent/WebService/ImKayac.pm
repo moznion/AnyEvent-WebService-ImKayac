@@ -1,28 +1,37 @@
-package WebService::ImKayac;
+package AnyEvent::WebService::ImKayac;
 
-use common::sense;
-use utf8;
+use strict;
+use warnings;
+
 our $VERSION = '0.01';
 
 use AnyEvent::HTTP;
 use HTTP::Request::Common;
 use Digest::SHA qw/sha1_hex/;
+use JSON;
+use Carp;
 
 =head1 NAME
 
-WebService::ImKayac - connection wrapper for im.kayac.com
+AnyEvent::WebService::ImKayac - connection wrapper for im.kayac.com
 
 =head1 SYNOPSIS
 
-  use WebService::ImKayac;
+  use AnyEvent::WebService::ImKayac;
 
-  my $im = WebService::ImKayac->new(
+  my $im = AnyEvent::WebService::ImKayac->new(
     type => 'password',
     user => '...',
     password => '...'
   );
 
-  $im->send('Hello! test send!!');
+  $im->send('Hello! test send!!', sub {
+      my $res = shift;
+      
+      unless ( $res->{result} eq "posted" ) {
+          warn $res->{error};
+      }
+  });
 
 =head2 METHODS
 
@@ -56,15 +65,15 @@ sub new {
     my $pkg = shift;
     my %args = ($_[1]) ? @_ : %{$_[1]};
 
-    die "[im.kayac][ERROR] require user\n" unless $args{user};
+    croak "require user" unless $args{user};
     $args{type} = 'none' if $args{type} !~ /^(none|password|secret)$/;
 
     if ($args{type} eq 'password' && !$args{password}) {
-        die "[im.kayac][ERROR] require password\n";
+        croak "require password";
     }
 
     if ($args{type} eq 'secret' && !$args{secret_key}) {
-        die "[im.kayac][ERROR] require secret_key\n";
+        croak "require secret_key";
     }
 
     bless \%args, $pkg;
@@ -73,12 +82,14 @@ sub new {
 
 =head3 send
 
-requires message string
+requires message string and callback coderef
 
 =cut
 
-sub send ($) {
-    my ($self, $msg) = @_;
+sub send {
+    my ($self, $msg, $cb) = @_;
+    
+    croak "callback coderef is required" unless ref $cb eq 'CODE';
 
     my $user = $self->{user};
     my $f = sprintf('_param_%s', $self->{type});
@@ -86,18 +97,13 @@ sub send ($) {
     my $req = POST "http://im.kayac.com/api/post/${user}", [ $self->$f($msg) ];
     my %headers = map { $_ => $req->header($_), } $req->headers->header_field_names;
 
-    eval {
-        my $cv = AnyEvent->condvar;
-        my $r; $r = http_post $req->uri, $req->content, headers => \%headers, sub {
-            undef $r;
-            $cv->send(1);
-        };
-        $cv->recv;
-        undef $cv;
+    http_post $req->uri, $req->content, headers => \%headers, sub {
+        my ($body, $hdr) = @_;
+        
+        my $json = decode_json($body);
+        
+        $cb->($json);
     };
-    if ($@) {
-        #warn "[im.kayac][ERROR]", YAML::Dump($@);
-    }
 }
 
 
