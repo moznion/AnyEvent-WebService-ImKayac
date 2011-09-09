@@ -1,8 +1,11 @@
 use inc::Module::Install;
-name 'WebService-ImKayac';
-all_from 'lib/WebService/ImKayac.pm';
+name 'AnyEvent-WebService-ImKayac';
+all_from 'lib/AnyEvent/WebService/ImKayac.pm';
 
-# requires '';
+requires 'AnyEvent::HTTP';
+requires 'JSON';
+requires 'HTTP::Request::Common';
+requires 'Digest::SHA';
 
 tests 't/*.t';
 author_tests 'xt';
