@@ -82,19 +82,22 @@ sub new {
 
 =head3 send
 
-requires message string and callback coderef
+It accepts a hash with parameters. You should pass message and cb as parameter.
 
 =cut
 
 sub send {
-    my ($self, $msg, $cb) = @_;
+    my ($self, %args) = @_;
     
-    croak "callback coderef is required" unless ref $cb eq 'CODE';
+    croak "missing required parameter 'message'" unless defined $args{message};
+    croak "missing required parameter 'cb'" unless defined $args{cb};
+    
+    croak "parameter 'cb' should be coderef" unless ref $args{cb} eq 'CODE';
 
     my $user = $self->{user};
     my $f = sprintf('_param_%s', $self->{type});
     # from http://github.com/typester/irssi-plugins/blob/master/hilight2im.pl
-    my $req = POST "http://im.kayac.com/api/post/${user}", [ $self->$f($msg) ];
+    my $req = POST "http://im.kayac.com/api/post/${user}", [ $self->$f(%args) ];
     my %headers = map { $_ => $req->header($_), } $req->headers->header_field_names;
 
     http_post $req->uri, $req->content, headers => \%headers, sub {
@@ -102,7 +105,7 @@ sub send {
         
         my $json = decode_json($body);
         
-        $cb->($json);
+        $args{cb}->($json);
     };
 }
 
@@ -116,8 +119,8 @@ calls if type is 'none'
 =cut
 
 sub _param_none {
-    my ($self, $msg) = @_;
-    return ( message => $msg );
+    my ($self, %args) = @_;
+    %args;
 }
 
 =head3 _param_password
@@ -127,8 +130,9 @@ calls if type is 'password'
 =cut
 
 sub _param_password {
-    my ($self, $msg) = @_;
-    return ( message => $msg, password => $self->{password} );
+    my ($self, %args) = @_;
+    $args{password} = $self->{password};
+    %args;
 }
 
 =head3 _param_secret
@@ -138,9 +142,10 @@ calls if type is 'secret'
 =cut
 
 sub _param_secret {
-    my ($self, $msg) = @_;
+    my ($self, %args) = @_;
     my $skey = $self->{secret_key};
-    return ( message => $msg, sig => sha1_hex("${msg}${skey}") );
+    $args{sig} = sha1_hex("$args{message}${skey}");
+    %args;
 }
 
 1;
