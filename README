@@ -2,10 +2,10 @@ This is Perl module WebService::ImKayac.
 
 INSTALLATION
 
-WebService::ImKayac installation is straightforward. If your CPAN shell is set up,
+AnyEvent::WebService::ImKayac installation is straightforward. If your CPAN shell is set up,
 you should just be able to do
 
-    % cpan WebService::ImKayac
+    % cpan AnyEvent::WebService::ImKayac
 
 Download it, unpack it, then build it as per the usual:
 
@@ -18,9 +18,9 @@ Then install it:
 
 DOCUMENTATION
 
-WebService::ImKayac documentation is available as in POD. So you can do:
+AnyEvent::WebService::ImKayac documentation is available as in POD. So you can do:
 
-    % perldoc WebService::ImKayac
+    % perldoc AnyEvent::WebService::ImKayac
 
 to read the documentation online with your favorite pager.
 
