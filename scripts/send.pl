@@ -3,14 +3,13 @@
 use strict;
 use warnings;
 
-use FindBin::libs;
 use AnyEvent;
 use AnyEvent::WebService::ImKayac;
 use Config::Pit;
 
 my %conf = (%{ pit_get('im.kayac') }, type => 'secret');
 
-my $cv = AnyEvent::cv;
+my $cv = AE::cv;
 
 my $im = AnyEvent::WebService::ImKayac->new(%conf);
 
