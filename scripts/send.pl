@@ -1,17 +1,27 @@
 #!/usr/bin/env perl
 
-use common::sense;
-use utf8;
+use strict;
+use warnings;
 
 use FindBin::libs;
-use WebService::ImKayac;
+use AnyEvent;
+use AnyEvent::WebService::ImKayac;
 use Config::Pit;
-use YAML;
 
 my %conf = (%{ pit_get('im.kayac') }, type => 'secret');
 
-#warn YAML::Dump(\%conf);
+my $cv = AnyEvent::cv;
 
-my $im = WebService::ImKayac->new(%conf);
+my $im = AnyEvent::WebService::ImKayac->new(%conf);
 
-$im->send('Hello! test send!!');
+$im->send('Hello! test send!!', sub {
+    my $res = shift;
+    
+    unless ( $res->{result} eq "posted" ) {
+        warn $res->{error};
+    }
+    
+    $cv->send;
+});
+
+$cv->recv;
