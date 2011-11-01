@@ -6,6 +6,8 @@ requires 'AnyEvent::HTTP';
 requires 'JSON';
 requires 'HTTP::Request::Common';
 requires 'Digest::SHA';
+test_requires 'Test::TCP';
+test_requires 'Test::Requires';
 
 tests 't/*.t';
 author_tests 'xt';

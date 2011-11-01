@@ -4,9 +4,8 @@ use AnyEvent::WebService::ImKayac;
 use Test::More;
 use Test::TCP;
 use JSON;
-use Plack::Loader;
 use Digest::SHA1;
-use Plack::Request;
+use Test::Requires qw/Plack::Request Plack::Loader Plack::Request/;
 
 my $tests = {
     none => {
