@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 our $VERSION = '0.01';
+our $URL = "http://im.kayac.com";
 
 use AnyEvent::HTTP;
 use HTTP::Request::Common;
@@ -104,8 +105,10 @@ sub send {
 
     my $user = $self->{user};
     my $f = sprintf('_param_%s', $self->{type});
+
     # from http://github.com/typester/irssi-plugins/blob/master/hilight2im.pl
-    my $req = POST "http://im.kayac.com/api/post/${user}", [ $self->$f(%args) ];
+    my $req = POST "$URL/api/post/${user}", [ $self->$f(%args) ];
+
     my %headers = map { $_ => $req->header($_), } $req->headers->header_field_names;
 
     http_post $req->uri, $req->content, headers => \%headers, sub {
