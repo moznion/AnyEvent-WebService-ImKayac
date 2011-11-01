@@ -170,6 +170,7 @@ __END__
 =head1 AUTHOR
 
 taiyoh E<lt>sun.basix@gmail.comE<gt>
+soh335 E<lt>sugarbabe335@gmail.comE<gt>
 
 =head1 LICENSE
 
