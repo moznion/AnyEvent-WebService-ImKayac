@@ -14,11 +14,17 @@ my $cv = AE::cv;
 my $im = AnyEvent::WebService::ImKayac->new(%conf);
 
 $im->send( message => 'Hello! test send', cb => sub {
-    my $res = shift;
+    my ($hdr, $json, $err) = @_;
     
-    unless ( $res->{result} eq "posted" ) {
-        warn $res->{error};
-    }
+      if ( $err ) {
+          warn $err;
+      }
+      elsif ( ! $json ) {
+          warn $hdr->{Reason};
+      }
+      elsif ( $json->{result} ne "posted" ) {
+          warn $json->{error};
+      }
     
     $cv->send;
 });

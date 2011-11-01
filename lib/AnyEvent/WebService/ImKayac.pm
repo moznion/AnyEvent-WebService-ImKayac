@@ -28,7 +28,13 @@ AnyEvent::WebService::ImKayac - connection wrapper for im.kayac.com
   $im->send( message => 'Hello! test send!!', cb => sub {
       my ($hdr, $json, $err) = @_;
       
-      unless ( ! $err and $json and $json->{result} eq "posted" ) {
+      if ( $err ) {
+          warn $err;
+      }
+      elsif ( ! $json ) {
+          warn $hdr->{Reason};
+      }
+      elsif ( $json->{result} ne "posted" ) {
           warn $json->{error};
       }
   });
