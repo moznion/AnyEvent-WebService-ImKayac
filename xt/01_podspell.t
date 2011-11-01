@@ -7,4 +7,6 @@ all_pod_files_spelling_ok('lib');
 __DATA__
 taiyoh
 sun.basix@gmail.com
-WebService::ImKayac
+soh335
+sugarbabe335@gmail.com
+AnyEvent::WebService::ImKayac
