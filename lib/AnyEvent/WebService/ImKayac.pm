@@ -99,9 +99,9 @@ sub send {
     my ($self, %args) = @_;
     
     croak "missing required parameter 'message'" unless defined $args{message};
-    croak "missing required parameter 'cb'" unless defined $args{cb};
+    my $cb = delete $args{cb} || croak "missing required parameter 'cb'";
     
-    croak "parameter 'cb' should be coderef" unless ref $args{cb} eq 'CODE';
+    croak "parameter 'cb' should be coderef" unless ref $cb eq 'CODE';
 
     my $user = $self->{user};
     my $f = sprintf('_param_%s', $self->{type});
@@ -118,13 +118,11 @@ sub send {
 
         if ( $hdr->{Status} =~ /^2/ ) {
             my $json = eval { decode_json($body) };
-            $args{cb}->( $hdr, $json, $@ );
+            $cb->( $hdr, $json, $@ );
         }
         else {
-            $args{cb}->( $hdr, undef, $@ );
+            $cb->( $hdr, undef, $@ );
         }
-        
-        $args{cb}->($json);
     };
 }
 
