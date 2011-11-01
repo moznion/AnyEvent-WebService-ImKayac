@@ -26,10 +26,10 @@ AnyEvent::WebService::ImKayac - connection wrapper for im.kayac.com
   );
 
   $im->send( message => 'Hello! test send!!', cb => sub {
-      my $res = shift;
+      my ($hdr, $json, $err) = @_;
       
-      unless ( $res->{result} eq "posted" ) {
-          warn $res->{error};
+      unless ( ! $err and $json and $json->{result} eq "posted" ) {
+          warn $json->{error};
       }
   });
 
@@ -104,8 +104,16 @@ sub send {
 
     http_post $req->uri, $req->content, headers => \%headers, sub {
         my ($body, $hdr) = @_;
-        
-        my $json = decode_json($body);
+
+        local $@;
+
+        if ( $hdr->{Status} =~ /^2/ ) {
+            my $json = eval { decode_json($body) };
+            $args{cb}->( $hdr, $json, $@ );
+        }
+        else {
+            $args{cb}->( $hdr, undef, $@ );
+        }
         
         $args{cb}->($json);
     };
