@@ -77,9 +77,37 @@ my $tests = {
             server_error => [],
         },
     },
+    password => {
+        server => {
+            invalid_json => [],
+            type_test => [
+                sub {
+                    my $req = shift;
+                    is ($req->body_parameters->{password}, "fuga", "valid password");
+                    return [200, [ "Content-Type" => "application/json" ], [ encode_json { result => "posted" } ] ];
+                },
+            ],
+            server_error => [],
+        },
+        client => {
+            invalid_json => [],
+            type_test => [
+                sub {
+                    my $cv = shift;
+                    AnyEvent::WebService::ImKayac->new( user => "hoge", type => "password", password => "fuga" )->send( message => "m", cb => sub {
+                            my ($hdr, $json, $err) = @_;
+                            ok(! $err, "if post is success, \$err is undef");
+                            is($json->{result}, "posted", "if post is success, \$json->{result} is posted");
+                            $cv->send;
+                        });
+                },
+            ],
+            server_error => [],
+        },
+    },
 };
 
-for my $testname (qw/none secret/) {
+for my $testname (qw/none secret password/) {
     for my $server_test (qw/invalid_json type_test server_error/) {
         test_tcp(
             client => sub {
