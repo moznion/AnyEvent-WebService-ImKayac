@@ -168,9 +168,10 @@ sub _param_secret {
 1;
 __END__
 
-=head1 AUTHOR
+=head1 AUTHORS
 
 taiyoh E<lt>sun.basix@gmail.comE<gt>
+
 soh335 E<lt>sugarbabe335@gmail.comE<gt>
 
 =head1 LICENSE
