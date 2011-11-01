@@ -55,7 +55,7 @@ my $tests = {
             type_test => [
                 sub {
                     my $req = shift;
-                    is (Digest::SHA1::sha1_hex($req->body_parameters->{message}."hoge"), $req->body_parameters->{sig}, "message + secret_key is valid");
+                    is (Digest::SHA1::sha1_hex($req->body_parameters->{message}."fuga"), $req->body_parameters->{sig}, "message + secret_key is valid");
                     return [200, [ "Content-Type" => "application/json" ], [ encode_json { result => "posted" } ] ];
                 },
             ],
@@ -66,7 +66,7 @@ my $tests = {
             type_test => [
                 sub {
                     my $cv = shift;
-                    AnyEvent::WebService::ImKayac->new( user => "hoge", type => "secret", secret_key => "hoge" )->send( message => "m", cb => sub {
+                    AnyEvent::WebService::ImKayac->new( user => "hoge", type => "secret", secret_key => "fuga" )->send( message => "m", cb => sub {
                             my ($hdr, $json, $err) = @_;
                             ok(! $err, "if post is success, \$err is undef");
                             is($json->{result}, "posted", "if post is success, \$json->{result} is posted");
