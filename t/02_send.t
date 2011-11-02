@@ -5,7 +5,7 @@ use Test::More;
 use Test::TCP;
 use JSON;
 use Digest::SHA1;
-use Test::Requires qw/Plack::Request Plack::Loader Plack::Request/;
+use Test::Requires qw/Plack::Loader Plack::Request/;
 
 my $tests = {
     none => {
