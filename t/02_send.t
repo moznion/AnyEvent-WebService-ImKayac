@@ -4,7 +4,7 @@ use AnyEvent::WebService::ImKayac;
 use Test::More;
 use Test::TCP;
 use JSON;
-use Digest::SHA1;
+use Digest::SHA qw/sha1_hex/;
 use Test::Requires qw/Plack::Loader Plack::Request/;
 
 my $tests = {
@@ -55,7 +55,7 @@ my $tests = {
             type_test => [
                 sub {
                     my $req = shift;
-                    is (Digest::SHA1::sha1_hex($req->body_parameters->{message}."fuga"), $req->body_parameters->{sig}, "message + secret_key is valid");
+                    is (sha1_hex($req->body_parameters->{message}."fuga"), $req->body_parameters->{sig}, "message + secret_key is valid");
                     return [200, [ "Content-Type" => "application/json" ], [ encode_json { result => "posted" } ] ];
                 },
             ],
