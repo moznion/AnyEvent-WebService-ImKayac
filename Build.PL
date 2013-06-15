@@ -25,7 +25,7 @@ my %args = (
 
     name            => 'AnyEvent-WebService-ImKayac',
     module_name     => 'AnyEvent::WebService::ImKayac',
-    allow_pure_perl => 0,
+    allow_pureperl => 0,
 
     script_files => [glob('script/*'), glob('bin/*')],
 
