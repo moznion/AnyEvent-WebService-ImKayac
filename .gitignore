@@ -8,3 +8,10 @@ MANIFEST
 Makefile.old
 MYMETA.json
 MYMETA.yml
+/AnyEvent-WebService-ImKayac-*
+/.build
+/_build_params
+/Build
+!Build/
+!META.json
+!LICENSE
