@@ -7,137 +7,142 @@ use JSON;
 use Digest::SHA qw/sha1_hex/;
 use Test::Requires qw/Plack::Loader Plack::Request/;
 
-my $tests = {
-    none => {
-        server => {
-            invalid_json => [sub {
-                return [200, [ "Content-Type" => "application/json" ], [ "" ] ];
-            }],
-            type_test => [sub {
-                return [200, [ "Content-Type" => "application/json" ], [ encode_json { result => "posted" } ] ];
-            }],
-            server_error => [sub {
-                return [500, [ "Reason" => "server error" ], [] ];
-            }],
+my $tests = [
+    # internal error
+    {
+        response => sub {
+            return [500, [], [] ];
         },
-        client => {
-            invalid_json => [sub {
-                    my $cv = shift;
-                    AnyEvent::WebService::ImKayac->new( user => "hoge", type => "none" )->send( message => "m", cb => sub {
-                            my ($hdr, $json, $err) = @_;
-                            ok($err, "if json is invalid, defined \$err");
-                            ok(! defined $json, "if json is invalid, \$json is undef");
-                            $cv->send;
-                        });
-            }],
-            type_test => [sub {
-                    my $cv = shift;
-                    AnyEvent::WebService::ImKayac->new( user => "hoge", type => "none" )->send( message => "m", cb => sub {
-                            my ($hdr, $json, $err) = @_;
-                            ok(! $err, "if post is success, \$err is undef");
-                            is($json->{result}, "posted", "if post is success, \$json->{result} is posted");
-                            $cv->send;
-                        });
-            }],
-            server_error => [sub {
-                    my $cv = shift;
-                    AnyEvent::WebService::ImKayac->new( user => "hoge", type => "none" )->send( message => "m", cb => sub {
-                            my ($hdr, $json, $err) = @_;
-                            ok(! $json, "if server is error, \$json is undef");
-                            $cv->send;
-                        });
-            }],
-        },
-    },
-    secret => {
-        server => {
-            invalid_json => [],
-            type_test => [
-                sub {
-                    my $req = shift;
-                    is (sha1_hex($req->body_parameters->{message}."fuga"), $req->body_parameters->{sig}, "message + secret_key is valid");
-                    return [200, [ "Content-Type" => "application/json" ], [ encode_json { result => "posted" } ] ];
-                },
-            ],
-            server_error => [],
-        },
-        client => {
-            invalid_json => [],
-            type_test => [
-                sub {
-                    my $cv = shift;
-                    AnyEvent::WebService::ImKayac->new( user => "hoge", type => "secret", secret_key => "fuga" )->send( message => "m", cb => sub {
-                            my ($hdr, $json, $err) = @_;
-                            ok(! $err, "if post is success, \$err is undef");
-                            is($json->{result}, "posted", "if post is success, \$json->{result} is posted");
-                            $cv->send;
-                        });
-                },
-            ],
-            server_error => [],
-        },
-    },
-    password => {
-        server => {
-            invalid_json => [],
-            type_test => [
-                sub {
-                    my $req = shift;
-                    is ($req->body_parameters->{password}, "fuga", "valid password");
-                    return [200, [ "Content-Type" => "application/json" ], [ encode_json { result => "posted" } ] ];
-                },
-            ],
-            server_error => [],
-        },
-        client => {
-            invalid_json => [],
-            type_test => [
-                sub {
-                    my $cv = shift;
-                    AnyEvent::WebService::ImKayac->new( user => "hoge", type => "password", password => "fuga" )->send( message => "m", cb => sub {
-                            my ($hdr, $json, $err) = @_;
-                            ok(! $err, "if post is success, \$err is undef");
-                            is($json->{result}, "posted", "if post is success, \$json->{result} is posted");
-                            $cv->send;
-                        });
-                },
-            ],
-            server_error => [],
-        },
-    },
-};
-
-for my $testname (qw/none secret password/) {
-    for my $server_test (qw/invalid_json type_test server_error/) {
-        test_tcp(
-            client => sub {
-                my $port = shift;
-                local $AnyEvent::WebService::ImKayac::URL = "http://127.0.0.1:$port";
-
-                {
-                    my $test = shift @{$tests->{$testname}{client}{$server_test}};
-                    if ( $test ) {
-                        my $cv = AE::cv;
-                        $test and $test->($cv);
-                        $cv->recv;
-                    }
+        client => sub {
+            my $cv = shift;
+            AnyEvent::WebService::ImKayac->new(
+                user => "hoge",
+                type => "none",
+            )->send(
+                message => "m",
+                cb => sub {
+                    my ($hdr, $json, $reason) = @_;
+                    ok ! $json;
+                    is $reason, "Internal Server Error";
+                    $cv->send;
                 }
-            },
-            server => sub {
-                my $port = shift;
+            );
+        },
+    },
+    # invalid json
+    {
+        response => sub {
+            [200, [" Content-Type" => "application/json" ], [] ]
+        },
+        client   => sub {
+            my $cv = shift;
+            AnyEvent::WebService::ImKayac->new(
+                user => "hoge",
+                type => "none",
+            )->send(
+                message => "m",
+                cb => sub {
+                    my ($hdr, $json, $reason) = @_;
+                    ok ! $json;
+                    like $reason, qr/^parse error:/;
+                    $cv->send;
+                }
+            );
+        },
+    },
+    # success when none type
+    {
+        response => sub {
+            [200, [" Content-Type" => "application/json" ], [ encode_json({ result => "posted" }) ] ]
+        },
+        client   => sub {
+            my $cv = shift;
+            AnyEvent::WebService::ImKayac->new(
+                user => "hoge",
+                type => "none",
+            )->send(
+                message => "m",
+                cb => sub {
+                    my ($hdr, $json, $reason) = @_;
+                    is $json->{result}, "posted";
+                    is $reason, "OK";
+                    $cv->send;
+                },
+            );
+        },
+    },
+    #password type
+    {
+        response => sub {
+            my $req = shift;
+            is $req->param('password'), 'dameleon';
+            [200, [" Content-Type" => "application/json" ], [ encode_json({ result => "posted" }) ] ]
+        },
+        client   => sub {
+            my $cv = shift;
+            AnyEvent::WebService::ImKayac->new(
+                user     => "hoge",
+                type     => "password",
+                password => "dameleon",
+            )->send(
+                message => "m",
+                cb => sub {
+                    my ($hdr, $json, $reason) = @_;
+                    is $json->{result}, "posted";
+                    is $reason, "OK";
+                    $cv->send;
+                },
+            );
+        },
+    },
+    #secret type
+    {
+        response => sub {
+            my $req = shift;
+            is $req->param('sig'), sha1_hex( "m" . "dameleon" );
+            [200, [" Content-Type" => "application/json" ], [ encode_json({ result => "posted" }) ] ]
+        },
+        client   => sub {
+            my $cv = shift;
+            AnyEvent::WebService::ImKayac->new(
+                user       => "hoge",
+                type       => "secret",
+                secret_key => "dameleon",
+            )->send(
+                message => "m",
+                cb => sub {
+                    my ($hdr, $json, $reason) = @_;
+                    is $json->{result}, "posted";
+                    is $reason, "OK";
+                    $cv->send;
+                },
+            );
+        },
+    },
+];
 
-                my $app = sub {
-                    my $test = shift @{$tests->{$testname}{server}{$server_test}};
-                    $test and $test->(Plack::Request->new(shift));
-                };
-
-                Plack::Loader->auto(
-                    host => "127.0.0.1",
-                    port => $port,
-                )->run($app);
-            },
-        );
-    }
+for my $test ( @$tests ) {
+    test_tcp (
+        client => sub {
+            my $port = shift;
+            local $AnyEvent::WebService::ImKayac::URL = "http://127.0.0.1:$port";
+            my $client = $test->{client};
+            my $cv = AE::cv;
+            $client->($cv);
+            $cv->recv;
+        },
+        server => sub {
+            my $port = shift;
+            my $app = sub {
+                my $req = Plack::Request->new(shift);
+                $test->{response}->($req);
+            };
+            Plack::Loader->auto(
+                host => "127.0.0.1",
+                port => $port,
+            )->run($app);
+        },
+    );
 }
 
 done_testing;
